@@ -26,6 +26,10 @@ def metric_names(payload, prefix, sufix, **kwargs):
             e = re.sub(r'[\d].*$', '', entry.lower())
             e = re.sub(r'[\(\)]', '', e).split()
             label = '_'.join(e)
+        elif special_label == 'voltage':
+            e = re.sub(r'([\d+]v)|([\d+].[\d*]v)', '', entry.lower())
+            e = re.sub(r"[\d]+", "", e).lower().split()
+            label = '_'.join(e[:-1]).replace('-', '_')
         else:
             e = re.sub(r"[\d]+", "", entry).lower().split()
             label = '_'.join(e[:-1]).replace('-', '_')
@@ -49,7 +53,8 @@ def metric_names(payload, prefix, sufix, **kwargs):
     return metric_dic
 
 
-def extract_labels(entries, payload, node_name):
+def extract_labels(entries, payload, node_name, node_uuid, instance_uuid,
+                   timestamp):
     """ This function extract the labels to be used by a metric
 
     If a metric has many entries we add the 'Sensor ID' information as label
@@ -71,16 +76,19 @@ def extract_labels(entries, payload, node_name):
     LOG.info('extract_labels function called with: entries=%s | payload=%s | \
              node_name=%s' % (str(entries), str(payload), node_name))
     if len(entries) == 1:
-        labels = {'node_name': node_name,
-                  'entity_id': payload[entries[0]]['Entity ID']}
+        labels = {'node_name': node_name, 'node_uuid': node_uuid,
+                  'instance_uuid': instance_uuid, 'timestamp': timestamp,
+                  'entity_id': payload[entries[0]]['Entity ID'],
+                  'sensor_id': payload[entries[0]]['Sensor ID']}
         return {entries[0]: labels}
     entries_labels = {}
     for entry in entries:
         try:
             entity_id = payload[entry]['Entity ID']
             sensor_id = payload[entry]['Sensor ID']
-            metric_label = {'node_name': node_name,
-                            'entity_id': entity_id,
+            metric_label = {'node_name': node_name, 'node_uuid': node_uuid,
+                            'instance_uuid': instance_uuid,
+                            'timestamp': timestamp, 'entity_id': entity_id,
                             'sensor_id': sensor_id}
             entries_labels[entry] = metric_label
         except Exception as e:
@@ -114,11 +122,13 @@ def extract_values(entries, payload, use_ipmi_format=True):
     return values
 
 
-def prometheus_format(payload, node_name, ipmi_metric_registry,
-                      available_metrics, use_ipmi_format):
+def prometheus_format(payload, node_name, node_uuid, instance_uuid, timestamp,
+                      ipmi_metric_registry, available_metrics,
+                      use_ipmi_format):
     for metric in available_metrics:
         entries = available_metrics[metric]
-        labels = extract_labels(entries, payload, node_name)
+        labels = extract_labels(entries, payload, node_name, node_uuid,
+                                instance_uuid, timestamp)
         values = extract_values(entries, payload,
                                 use_ipmi_format=use_ipmi_format)
         if all(v is None for v in values.values()):
@@ -151,16 +161,22 @@ CATEGORY_PARAMS = {
                   'use_ipmi_format': True},
     'fan': {'prefix': 'baremetal_', 'sufix': '',
             'extra_params': {'extract_unit': True, 'special_label': 'fan'},
-            'use_ipmi_format': True}
+            'use_ipmi_format': True},
+    'voltage': {'prefix': 'baremetal_', 'sufix': '',
+                'extra_params': {'extract_unit': False,
+                                 'special_label': 'voltage'},
+                'use_ipmi_format': True}
 }
 
 
-def category_registry(category_name, payload, node_name, ipmi_metric_registry):
+def category_registry(category_name, payload, node_name, node_uuid,
+                      instance_uuid, timestamp, ipmi_metric_registry):
     if category_name in CATEGORY_PARAMS:
         prefix = CATEGORY_PARAMS[category_name]['prefix']
         sufix = CATEGORY_PARAMS[category_name]['sufix']
         extra = CATEGORY_PARAMS[category_name]['extra_params']
         available_metrics = metric_names(payload, prefix, sufix, **extra)
         use_ipmi_format = CATEGORY_PARAMS[category_name]['use_ipmi_format']
-        prometheus_format(payload, node_name, ipmi_metric_registry,
-                          available_metrics, use_ipmi_format)
+        prometheus_format(payload, node_name, node_uuid, instance_uuid,
+                          timestamp, ipmi_metric_registry, available_metrics,
+                          use_ipmi_format)

@@ -12,6 +12,9 @@ class TestPayloadsParser(unittest.TestCase):
 
     def setUp(self):
         self.node_name = DATA['payload']['node_name']
+        self.node_uuid = DATA['payload']['node_uuid']
+        self.instance_uuid = DATA['payload']['instance_uuid']
+        self.timestamp = DATA['payload']['timestamp']
         self.payload = DATA['payload']['payload']
         self.metric_registry = CollectorRegistry()
 
@@ -27,13 +30,18 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_front_led_panel', management_metrics_name)
 
         ipmi.prometheus_format(self.payload['Management'], self.node_name,
-                               self.metric_registry, management_metrics_name,
-                               ipmi_format)
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp, self.metric_registry,
+                               management_metrics_name, ipmi_format)
 
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_front_led_panel',
             {'node_name': 'knilab-master-u9',
-             'entity_id': '7.1 (System Board)'}))
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)',
+             'sensor_id': 'Front LED Panel (0x23)'}))
 
     def test_temperature_parser(self):
         prefix = ipmi.CATEGORY_PARAMS['temperature']['prefix']
@@ -49,23 +57,41 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_inlet_temp_celsius', temperature_metrics_name)
 
         ipmi.prometheus_format(self.payload['Temperature'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, temperature_metrics_name,
                                ipmi_format)
 
         self.assertEqual(21.0, self.metric_registry.get_sample_value(
-            'baremetal_inlet_temp_celsius', {'node_name': self.node_name,
-                                             'entity_id': '7.1 (System Board)'}
+            'baremetal_inlet_temp_celsius',
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)',
+             'sensor_id': 'Inlet Temp (0x5)'}
         ))
         self.assertEqual(36.0, self.metric_registry.get_sample_value(
             'baremetal_exhaust_temp_celsius',
-            {'node_name': self.node_name, 'entity_id': '7.1 (System Board)'}))
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)',
+             'sensor_id': 'Exhaust Temp (0x6)'}))
         self.assertEqual(44.0, self.metric_registry.get_sample_value(
             'baremetal_temp_celsius', {'node_name': self.node_name,
                                        'sensor_id': 'Temp (0x1)',
+                                       'node_uuid': self.node_uuid,
+                                       'instance_uuid': self.instance_uuid,
+                                       'timestamp': self.timestamp,
                                        'entity_id': '3.1 (Processor)'}))
         self.assertEqual(43.0, self.metric_registry.get_sample_value(
             'baremetal_temp_celsius', {'node_name': self.node_name,
                                        'sensor_id': 'Temp (0x2)',
+                                       'node_uuid': self.node_uuid,
+                                       'instance_uuid': self.instance_uuid,
+                                       'timestamp': self.timestamp,
                                        'entity_id': '3.2 (Processor)'}))
 
     def test_system_parser(self):
@@ -80,15 +106,27 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_system_post_err', system_metrics_name)
 
         ipmi.prometheus_format(self.payload['System'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, system_metrics_name,
                                ipmi_format)
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_system_unknown',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'Unknown (0x8)'}
         ))
         self.assertEqual(None, self.metric_registry.get_sample_value(
             'baremetal_system_post_err',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'POST Err (0x1e)'}
         ))
 
     def test_current_parser(self):
@@ -103,20 +141,35 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_pwr_consumption', current_metrics_name)
 
         ipmi.prometheus_format(self.payload['Current'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, current_metrics_name,
                                ipmi_format)
         self.assertEqual(264.0, self.metric_registry.get_sample_value(
             'baremetal_pwr_consumption',
-            {'node_name': self.node_name, 'entity_id': '7.1 (System Board)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)',
+             'sensor_id': 'Pwr Consumption (0x76)'}
         ))
         self.assertEqual(0.600, self.metric_registry.get_sample_value(
             'baremetal_current',
-            {'node_name': self.node_name, 'entity_id': '10.1 (Power Supply)',
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '10.1 (Power Supply)',
              'sensor_id': 'Current 1 (0x6b)'}
         ))
         self.assertEqual(0.600, self.metric_registry.get_sample_value(
             'baremetal_current',
-            {'node_name': self.node_name, 'entity_id': '10.2 (Power Supply)',
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '10.2 (Power Supply)',
              'sensor_id': 'Current 2 (0x6c)'}
         ))
 
@@ -134,19 +187,36 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_chassis_mismatch', version_metrics_name)
 
         ipmi.prometheus_format(self.payload['Version'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, version_metrics_name,
                                ipmi_format)
         self.assertEqual(1.0, self.metric_registry.get_sample_value(
             'baremetal_tpm_presence',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'TPM Presence (0x41)'}
         ))
         self.assertEqual(None, self.metric_registry.get_sample_value(
             'baremetal_hdwr_version_err',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'Hdwr version err (0x1f)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_chassis_mismatch',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'Chassis Mismatch (0x37)'}
         ))
 
     def test_memory_parser(self):
@@ -173,48 +243,100 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_memory_spared', memory_metrics_name)
 
         ipmi.prometheus_format(self.payload['Memory'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, memory_metrics_name,
                                ipmi_format)
 
         self.assertEqual(None, self.metric_registry.get_sample_value(
             'baremetal_mem_ecc_warning',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'Mem ECC Warning (0x1b)'}
         ))
         self.assertEqual(1.0, self.metric_registry.get_sample_value(
             'baremetal_memory_post_pkg_repair',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'POST Pkg Repair (0x45)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_idpt_mem_fail',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'iDPT Mem Fail (0x2b)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_memory_spared',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'Memory Spared (0x11)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_memory_mirrored',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'Memory Mirrored (0x12)'}
         ))
         self.assertEqual(None, self.metric_registry.get_sample_value(
             'baremetal_memory_usb_over_current',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'USB Over-current (0x1d)'}
         ))
         self.assertEqual(1.0, self.metric_registry.get_sample_value(
             'baremetal_memory_ecc_uncorr_err',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'ECC Uncorr Err (0x2)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_memory_b',
-            {'node_name': self.node_name, 'entity_id': '32.1 (Memory Device)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '32.1 (Memory Device)',
+             'sensor_id': 'B  (0xd6)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_memory_a',
-            {'node_name': self.node_name, 'entity_id': '32.1 (Memory Device)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '32.1 (Memory Device)',
+             'sensor_id': 'A  (0xca)'}
         ))
         self.assertEqual(1.0, self.metric_registry.get_sample_value(
             'baremetal_memory_ecc_corr_err',
-            {'node_name': self.node_name, 'entity_id': '34.1 (BIOS)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'ECC Corr Err (0x1)'}
         ))
 
     def test_power_parser(self):
@@ -229,24 +351,36 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_power_status', power_metrics_name)
 
         ipmi.prometheus_format(self.payload['Power'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, power_metrics_name,
                                ipmi_format)
 
         self.assertEqual(None, self.metric_registry.get_sample_value(
             'baremetal_power_ps_redundancy',
-            {'node_name': self.node_name, 'entity_id': '7.1 (System Board)'}
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)',
+             'sensor_id': 'PS Redundancy (0x77)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_power_status', {'node_name': self.node_name,
                                        'sensor_id': 'Status (0x86)',
+                                       'node_uuid': self.node_uuid,
+                                       'instance_uuid': self.instance_uuid,
+                                       'timestamp': self.timestamp,
                                        'entity_id': '10.2 (Power Supply)'}))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_power_status', {'node_name': self.node_name,
                                        'sensor_id': 'Status (0x85)',
+                                       'node_uuid': self.node_uuid,
+                                       'instance_uuid': self.instance_uuid,
+                                       'timestamp': self.timestamp,
                                        'entity_id': '10.1 (Power Supply)'}))
 
     def test_watchdog2_parser(self):
-        print('WATCHDOG2')
         prefix = ipmi.CATEGORY_PARAMS['watchdog2']['prefix']
         sufix = ipmi.CATEGORY_PARAMS['watchdog2']['sufix']
         extra = ipmi.CATEGORY_PARAMS['watchdog2']['extra_params']
@@ -258,16 +392,27 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_os_watchdog', watchdog2_metrics_name)
 
         ipmi.prometheus_format(self.payload['Watchdog2'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, watchdog2_metrics_name,
                                ipmi_format)
 
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
-            'baremetal_os_watchdog_time', {'node_name': self.node_name,
-                                           'entity_id': '34.1 (BIOS)'}
+            'baremetal_os_watchdog_time',
+            {'node_name': self.node_name,
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '34.1 (BIOS)',
+             'sensor_id': 'OS Watchdog Time (0x23)'}
         ))
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
             'baremetal_os_watchdog', {'node_name': self.node_name,
-                                      'entity_id': '7.1 (System Board)'}
+                                      'node_uuid': self.node_uuid,
+                                      'instance_uuid': self.instance_uuid,
+                                      'timestamp': self.timestamp,
+                                      'entity_id': '7.1 (System Board)',
+                                      'sensor_id': 'OS Watchdog (0x71)'}
         ))
 
     def test_fan_parser(self):
@@ -282,74 +427,542 @@ class TestPayloadsParser(unittest.TestCase):
         self.assertIn('baremetal_fan_rpm', fan_metrics_name)
 
         ipmi.prometheus_format(self.payload['Fan'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
                                self.metric_registry, fan_metrics_name,
                                ipmi_format)
 
         self.assertEqual(0.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_redundancy_rpm', {'node_name': self.node_name,
-                                             'entity_id': '7.1 (System Board)'}
+            'baremetal_fan_redundancy_rpm',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'Fan Redundancy (0x78)'}
         ))
         self.assertEqual(9960.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan4A (0x3b)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan4A (0x3b)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5520.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan1B (0x40)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan1B (0x40)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5520.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan8B (0x47)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan8B (0x47)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(9360.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan3A (0x3a)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan3A (0x3a)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(9360.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan2A (0x39)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan2A (0x39)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5520.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan6B (0x45)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan6B (0x45)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(9720.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan5A (0x3c)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan5A (0x3c)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5520.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan3B (0x42)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan3B (0x42)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(9360.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan7A (0x3e)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan7A (0x3e)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5520.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan7B (0x46)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan7B (0x46)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5880.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan4B (0x43)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan4B (0x43)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(9360.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan1A (0x38)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan1A (0x38)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(9360.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan6A (0x3d)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan6A (0x3d)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5520.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan2B (0x41)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan2B (0x41)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(5640.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan5B (0x44)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan5B (0x44)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
         self.assertEqual(9240.0, self.metric_registry.get_sample_value(
-            'baremetal_fan_rpm', {'node_name': self.node_name,
-                                  'sensor_id': 'Fan8A (0x3f)',
-                                  'entity_id': '7.1 (System Board)'}))
+            'baremetal_fan_rpm',
+            {'node_name': self.node_name,
+             'sensor_id': 'Fan8A (0x3f)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'entity_id': '7.1 (System Board)'}))
+
+    def test_voltage_manager(self):
+        prefix = ipmi.CATEGORY_PARAMS['voltage']['prefix']
+        sufix = ipmi.CATEGORY_PARAMS['voltage']['sufix']
+        extra = ipmi.CATEGORY_PARAMS['voltage']['extra_params']
+        ipmi_format = ipmi.CATEGORY_PARAMS['voltage']['use_ipmi_format']
+
+        voltage_metrics_name = ipmi.metric_names(self.payload['Voltage'],
+                                                 prefix, sufix, **extra)
+
+        self.assertEqual(len(voltage_metrics_name), 19)
+        self.assertIn('baremetal_mem_vtt_pg', voltage_metrics_name)
+        self.assertIn('baremetal_sw_pg', voltage_metrics_name)
+        self.assertIn('baremetal_vsa_pg', voltage_metrics_name)
+        self.assertIn('baremetal_vcore_pg', voltage_metrics_name)
+        self.assertIn('baremetal_voltage', voltage_metrics_name)
+        self.assertIn('baremetal_dimm_pg', voltage_metrics_name)
+        self.assertIn('baremetal_vsbm_sw_pg', voltage_metrics_name)
+        self.assertIn('baremetal_ndc_pg', voltage_metrics_name)
+        self.assertIn('baremetal_ps_pg_fail', voltage_metrics_name)
+        self.assertIn('baremetal_vccio_pg', voltage_metrics_name)
+        self.assertIn('baremetal_vsb_sw_pg', voltage_metrics_name)
+        self.assertIn('baremetal_mem_vddq_pg', voltage_metrics_name)
+        self.assertIn('baremetal_bp_pg', voltage_metrics_name)
+        self.assertIn('baremetal_a_pg', voltage_metrics_name)
+        self.assertIn('baremetal_fivr_pg', voltage_metrics_name)
+        self.assertIn('baremetal_pvnn_sw_pg', voltage_metrics_name)
+        self.assertIn('baremetal_mem_vpp_pg', voltage_metrics_name)
+        self.assertIn('baremetal_pfault_fail_safe', voltage_metrics_name)
+        self.assertIn('baremetal_b_pg', voltage_metrics_name)
+
+        ipmi.prometheus_format(self.payload['Voltage'], self.node_name,
+                               self.node_uuid, self.instance_uuid,
+                               self.timestamp,
+                               self.metric_registry, voltage_metrics_name,
+                               ipmi_format)
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vddq_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM012 VDDQ PG (0x24)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vddq_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM345 VDDQ PG (0x27)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vddq_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM012 VDDQ PG (0x2e)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vddq_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM345 VDDQ PG (0x31)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vccio_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VCCIO PG (0x2a)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vccio_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VCCIO PG (0x34)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_pvnn_sw_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'PVNN SW PG (0x11)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_sw_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': '1.8V SW PG (0xe)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_sw_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': '2.5V SW PG (0xf)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_sw_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': '5V SW PG (0x10)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_a_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': '3.3V A PG (0x14)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_bp_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'BP2 PG (0xd)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_bp_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'BP1 PG (0xc)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_bp_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'BP0 PG (0xb)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_ps_pg_fail',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'PS1 PG FAIL (0x9)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_ps_pg_fail',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'PS2 PG FAIL (0xa)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_fivr_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'FIVR PG (0x2c)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_fivr_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'FIVR PG (0x36)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vsa_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VSA PG (0x2d)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vsa_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VSA PG (0x37)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vtt_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM012 VTT PG (0x26)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vtt_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM345 VTT PG (0x29)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vtt_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM012 VTT PG (0x30)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vtt_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM345 VTT PG (0x33)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vsbm_sw_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VSBM SW PG (0x13)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_b_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': '3.3V B PG (0x15)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vsb_sw_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VSB11 SW PG (0x12)'}
+        ))
+
+        self.assertEqual(208.0, self.metric_registry.get_sample_value(
+            'baremetal_voltage',
+            {'node_name': self.node_name,
+             'entity_id': '10.2 (Power Supply)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'Voltage 2 (0x6e)'}
+        ))
+        self.assertEqual(208.0, self.metric_registry.get_sample_value(
+            'baremetal_voltage',
+            {'node_name': self.node_name,
+             'entity_id': '10.1 (Power Supply)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'Voltage 1 (0x6d)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_ndc_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'NDC PG (0x8)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vcore_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VCORE PG (0x35)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_vcore_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'VCORE PG (0x2b)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vpp_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM345 VPP PG (0x32)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vpp_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM012 VPP PG (0x25)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vpp_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.2 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM012 VPP PG (0x2f)'}
+        ))
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_mem_vpp_pg',
+            {'node_name': self.node_name,
+             'entity_id': '3.1 (Processor)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'MEM345 VPP PG (0x28)'}
+        ))
+
+        self.assertEqual(0.0, self.metric_registry.get_sample_value(
+            'baremetal_dimm_pg',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'DIMM PG (0x7)'}
+        ))
+
+        self.assertEqual(None, self.metric_registry.get_sample_value(
+            'baremetal_pfault_fail_safe',
+            {'node_name': self.node_name,
+             'entity_id': '7.1 (System Board)',
+             'node_uuid': self.node_uuid,
+             'instance_uuid': self.instance_uuid,
+             'timestamp': self.timestamp,
+             'sensor_id': 'Pfault Fail Safe (0x74)'}
+        ))
